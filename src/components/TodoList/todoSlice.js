@@ -1,38 +1,31 @@
-import { createSlice } from '@reduxjs/toolkit'
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 export default createSlice({
   name: 'todoList',
-  initialState: [
-    {
-      id: "8ec633e7-1ae1-47d3-a620-cb3fe7aed969",
-      name: "CSS",
-      priority: "Medium",
-      completed: false,
-    },
-    {
-      id: "8ec633e7-1ae1-47d3-a620-cb3fe7aed970",
-      name: "JS",
-      priority: "High",
-      completed: true,
-    },
-    {
-      id: "8ec633e7-1ae1-47d3-a620-cb3fe7aed971", 
-      name: "HTML",
-      priority: "Low",
-      completed: true,
-    }
-  ],
+  initialState: { status: 'idle', todos: [] },
   reducers: {
     addTodo(state, action) {
-      state.push(action.payload)
+      state.push(action.payload);
     },
     toggleTodoStatus(state, action) {
-      const currentTodo = state.find(todo => todo.id === action.payload)
-      if(currentTodo) currentTodo.completed = !currentTodo.completed
-    }
-  }
-})
+      const currentTodo = state.find((todo) => todo.id === action.payload);
+      if (currentTodo) currentTodo.completed = !currentTodo.completed;
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchTodos.pending, (state, action) => {
+        state.status = 'loading';
+      })
+      .addCase(fetchTodos.fulfilled, (state, action) => {
+        state.todos = action.payload;
+        state.status = 'idle';
+      });
+  },
+});
 
-// export const { addTodo, toggleTodoStatus } = todoSlice.actions
-
-// export default todoSlice.reducer
+export const fetchTodos = createAsyncThunk('todos/fetchTodos', async () => {
+  const res = await fetch('/api/todos');
+  const data = await res.json();
+  return data.todos;
+});
